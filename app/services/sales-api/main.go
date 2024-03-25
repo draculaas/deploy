@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"github.com/draculaas/deploy/app/services/sales-api/handlers"
 	v1 "github.com/draculaas/deploy/business/web/v1"
+	"github.com/draculaas/deploy/business/web/v1/auth"
+	"github.com/draculaas/deploy/core/kvs"
+	"github.com/draculaas/deploy/core/web"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,7 +34,7 @@ func main() {
 	}
 
 	traceIDFunc := func(ctx context.Context) string {
-		return ""
+		return web.GetTraceID(ctx)
 	}
 
 	log = logger.NewWithEvents(
@@ -91,7 +94,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		return fmt.Errorf("parsing config: %w", err)
 	}
 
-	// start the app
+	// starting the app
 	log.Info(ctx, "starting service", "version", build)
 	defer log.Info(ctx, "shutdown complete")
 
@@ -103,6 +106,25 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	//
 	expvar.NewString("build").Set(build)
+
+	// init auth support
+	log.Info(ctx, "startup", "status", "initializing authentication support")
+
+	// Simple keystore versus using Vault
+	ks, err := kvs.NewFS(os.DirFS(cfg.Auth.KeysFolder))
+	if err != nil {
+		return fmt.Errorf("reading auth keys: %w", err)
+	}
+
+	authCfg := auth.Config{
+		Log:       log,
+		KeyLookup: ks,
+	}
+
+	a, err := auth.New(authCfg)
+	if err != nil {
+		return fmt.Errorf("constructin g auth: %w", err)
+	}
 
 	// start debug service
 	go func() {
@@ -124,6 +146,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		Build:    build,
 		Shutdown: shutdown,
 		Log:      log,
+		Auth:     a,
 	}
 
 	apiMux := v1.APIMux(cfgMux, handlers.Routers{})

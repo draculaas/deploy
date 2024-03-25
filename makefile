@@ -2,6 +2,14 @@
 SHELL_PATH = /bin/ash
 SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 
+# ==============================================================================
+# CLASS NOTES
+#
+# RSA Keys
+# 	To generate a private/public key PEM file.
+# 	$ openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+# 	$ openssl rsa -pubout -in private.pem -out public.pem
+
 
 run:
 	go run app/services/sales-api/main.go | go run app/tools/logfmt/main.go
@@ -10,7 +18,16 @@ run-help:
 	go run app/services/sales-api/main.go --help | go run app/tools/logfmt/main.go
 
 curl:
-	curl -il http://localhost:3000/hack
+	curl -il http://localhost:3000/v1/hack
+
+curl-auth:
+	curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/hackauth
+
+load:
+	hey -m GET -c 100 -n 100000 "http://localhost:3000/v1/hack"
+
+admin:
+	go run app/tools/admin/main.go
 
 # ------------------------------------------------------------------------------
 # Init commands

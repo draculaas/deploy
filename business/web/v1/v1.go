@@ -1,8 +1,10 @@
 package v1
 
 import (
-	"github.com/dimfeld/httptreemux/v5"
+	"github.com/draculaas/deploy/business/web/v1/auth"
+	"github.com/draculaas/deploy/business/web/v1/mid"
 	"github.com/draculaas/deploy/core/logger"
+	"github.com/draculaas/deploy/core/web"
 	"os"
 )
 
@@ -11,18 +13,20 @@ type APIMuxConfig struct {
 	Build    string
 	Shutdown chan os.Signal
 	Log      *logger.Logger
+	Auth     *auth.Auth
 }
 
 // RouteAdder defines behavior that sets the routes to bind for an instance
 // of the service.
 type RouteAdder interface {
-	Add(mux *httptreemux.ContextMux, cfg APIMuxConfig)
+	Add(app *web.App, cfg APIMuxConfig)
 }
 
-func APIMux(cfg APIMuxConfig, routeAdder RouteAdder) *httptreemux.ContextMux {
-	mux := httptreemux.NewContextMux()
+// APIMux ...Create a http.Handler with all app routes defined
+func APIMux(cfg APIMuxConfig, routeAdder RouteAdder) *web.App {
+	app := web.NewApp(cfg.Shutdown, mid.Logger(cfg.Log), mid.Errors(cfg.Log), mid.Metrics(), mid.Panics())
 
-	routeAdder.Add(mux, cfg)
+	routeAdder.Add(app, cfg)
 
-	return mux
+	return app
 }
