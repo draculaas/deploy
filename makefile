@@ -29,6 +29,12 @@ load:
 admin:
 	go run app/tools/admin/main.go
 
+ready:
+	curl -il http://localhost:3000/v1/readiness
+
+live:
+	curl -il http://localhost:3000/v1/liveness
+
 # ------------------------------------------------------------------------------
 # Init commands
 

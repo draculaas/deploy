@@ -110,7 +110,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 	// init auth support
 	log.Info(ctx, "startup", "status", "initializing authentication support")
 
-	// Simple keystore versus using Vault
+	// Simple keystore vs using Vault
 	ks, err := kvs.NewFS(os.DirFS(cfg.Auth.KeysFolder))
 	if err != nil {
 		return fmt.Errorf("reading auth keys: %w", err)

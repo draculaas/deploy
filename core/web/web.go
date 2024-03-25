@@ -6,10 +6,10 @@ import (
 	"github.com/dimfeld/httptreemux/v5"
 	"github.com/google/uuid"
 	"syscall"
+	"time"
 
 	"net/http"
 	"os"
-	"time"
 )
 
 // A Handler is a type that handles a http request within our own little mini
@@ -36,6 +36,24 @@ func (a *App) Handle(method string, group, path string, handler Handler, mw ...M
 	handler = wrapMiddleware(mw, handler)
 	handler = wrapMiddleware(a.mw, handler)
 
+	a.handle(method, group, path, handler)
+}
+
+// HandleNoMiddleware sets a handler function for a given HTTP method and path pair
+// to the application server mux. Does not include the application middleware.
+func (a *App) HandleNoMiddleware(method string, group string, path string, handler Handler) {
+	a.Handle(method, group, path, handler)
+}
+
+// SignalShutdown is used to gracefully shut down the app when an integrity
+// issue is identified.
+func (a *App) SignalShutdown() {
+	a.shutdown <- syscall.SIGTERM
+}
+
+// handle sets a handler function for a given HTTP method and path pair
+// to the application server mux.
+func (a *App) handle(method string, group string, path string, handler Handler) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		//
 		v := Values{
@@ -58,12 +76,6 @@ func (a *App) Handle(method string, group, path string, handler Handler, mw ...M
 	}
 
 	a.ContextMux.Handle(method, finalPath, h)
-}
-
-// SignalShutdown is used to gracefully shut down the app when an integrity
-// issue is identified.
-func (a *App) SignalShutdown() {
-	a.shutdown <- syscall.SIGTERM
 }
 
 // validateShutdown validates the error for special conditions that do not

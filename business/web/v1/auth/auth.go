@@ -62,7 +62,7 @@ func New(cfg Config) (*Auth, error) {
 	return &a, nil
 }
 
-// GenerateToken generates a signed JWT token string representing the user Claims.
+// GenerateToken ... Generates a signed JWT token string representing the user Claims.
 func (a *Auth) GenerateToken(kid string, claims Claims) (string, error) {
 	token := jwt.NewWithClaims(a.method, claims)
 	token.Header["kid"] = kid
@@ -85,7 +85,7 @@ func (a *Auth) GenerateToken(kid string, claims Claims) (string, error) {
 	return str, nil
 }
 
-// Authenticate processes the token to validate the sender's token is valid.
+// Authenticate ... Processes the token to validate the sender's token is valid.
 func (a *Auth) Authenticate(ctx context.Context, bearerToken string) (Claims, error) {
 	parts := strings.Split(bearerToken, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
